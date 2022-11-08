@@ -30,7 +30,7 @@ function setConectionText(text){
 
 function connectToSocket(){
     setConectionText("Conectando...");
-    socket = new WebSocket(serverHost);
+    socket = new WebSocket(serverHost); //Conectar al QUsb2Snes
     socket.binaryType = 'arraybuffer';
 
     socket.onerror = function(event) {
@@ -59,7 +59,7 @@ function connectToConsole(event){
     }
     consoleName = results[0];
 
-    socket.send(JSON.stringify({
+    socket.send(JSON.stringify({ //Conexión a la consola
         Opcode : "Attach",
         Space : "SNES",
         Operands : [consoleName]
@@ -68,7 +68,7 @@ function connectToConsole(event){
         Opcode : "Info",
         Space : "SNES"
     }));
-    socket.onmessage = empezarALeer;
+    socket.onmessage = empezarALeer; //Una vez confirmada la conexión, comenzamos a leer la memoria del juego
     setConectionText("Conectado a " + consoleName);
 
 }
@@ -97,11 +97,16 @@ function setOverOrUnderText(text){
     document.getElementById("overOrUnder").innerHTML = text;
 }
 
-function setHitText(text){
-    document.getElementById("hitStatus").innerHTML = text;
+var nBonks = 0;
+var bonked = false;
+function setBonkCount(){
+    if(!bonked){
+        nBonks++;
+        document.getElementById("bonkCount").innerHTML = ("Y con ese bonk, ya van " + nBonks);
+    }
 }
 
-function leerMemoria(dir, tam, fun){
+function leerMemoria(dir, tam, fun){ //Por algún motivo, si llamo directamente a socket.send, no puedo leer la respuesta
     socket.send(JSON.stringify({
         Opcode : "GetAddress",
         Space : "SNES",
@@ -111,31 +116,32 @@ function leerMemoria(dir, tam, fun){
     socket.onmessage = fun;
 }
 
-function leer(){ 
-    leerMemoria(INICIO_MEMORIAS, 0xFF, function(event){ 
-        var datos = new Uint8Array(event.data);
+function leer(){  //Así que encapsulo socket.send en otra función, y con esto si que puedo leer la respuesta??? No entiendo JS
+    leerMemoria(INICIO_MEMORIAS, 0xFF, function(event){ //Shoutouts a Stack Overflow
+        var datos = new Uint8Array(event.data); //Array de casi todos los valores de memoria
         actualizaDatos(datos);
     });
 }
 
 function actualizaDatos(datos){
-    if(datos[27] == 0){ //Busca en que seccion del mundo estas
+
+    if(datos[27] == 0){ //Indica en que seccion del mundo estas
         setOverOrUnderText("¡Estas en el Overworld!");
     }
     else{
         setOverOrUnderText("¡Estas en el Underworld!");
     }
-    if(datos[93] !== 2){  //Busca si te han golpeado
-        setHitText("Estoy bien :)");
+    if(datos[39] == 24 || datos[40] == 24){  //!ESTO NO FUNCIONA Indica si has bonkeado  
+        setBonkCount();
+        bonked = true;
     }
     else{
-        setHitText("Oof");
+        bonked = false;
     }
 }
 
-
 function empezarALeer(){
-    setInterval(leer, 500);
+    setInterval(leer, 200);
 }
 
 /** 
