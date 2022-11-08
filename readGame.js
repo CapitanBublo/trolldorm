@@ -111,28 +111,31 @@ function leerMemoria(dir, tam, fun){
     socket.onmessage = fun;
 }
 
-function leerUnderworld(){ 
+function leer(){ 
     leerMemoria(INICIO_MEMORIAS, 0xFF, function(event){ 
         var datos = new Uint8Array(event.data);
-        if(datos[27] == 0){ //Busca en que seccion del mundo estas
-            setOverOrUnderText("¡Estas en el Overworld!");
-        }
-        else{
-            setOverOrUnderText("¡Estas en el Underworld!");
-        }
-        if(datos[93] !== 2){  //Busca si te han golpeado
-            setHitText("Estoy bien :)");
-        }
-        else{
-            setHitText("Oof");
-        }
+        actualizaDatos(datos);
     });
+}
+
+function actualizaDatos(datos){
+    if(datos[27] == 0){ //Busca en que seccion del mundo estas
+        setOverOrUnderText("¡Estas en el Overworld!");
+    }
+    else{
+        setOverOrUnderText("¡Estas en el Underworld!");
+    }
+    if(datos[93] !== 2){  //Busca si te han golpeado
+        setHitText("Estoy bien :)");
+    }
+    else{
+        setHitText("Oof");
+    }
 }
 
 
 function empezarALeer(){
-    setInterval(leerUnderworld, 500);
-    setInterval(leerHit, 500);
+    setInterval(leer, 500);
 }
 
 /** 
