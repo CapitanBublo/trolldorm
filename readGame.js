@@ -180,8 +180,8 @@ function actualizaDatos(datos){
         muerte = false;
     }
 
-    //Check for spin speed: spin animation on 0x354 and dashing flag on 0x372
-    if((datos[255] == 15||datos[255] == 32) && datos[285] == 1){
+    //Check for super speed: spin, hookshot or medallion animation on 0x354 and dashing flag on 0x372
+    if((datos[255] == 15||datos[255] == 32||datos[255] == 21) && datos[285] == 1){
         setSpinSpeed("¡Spinspeed!");
     }
     else if(datos[285] == 0){
@@ -189,7 +189,7 @@ function actualizaDatos(datos){
     }
 
     //Check caida en 0x5B. Todas las caidas son en underworld así que no hace falta checkear eso.
-    if(datos[91] == 2){
+    if((datos[91] == 2) || (datos[91] == 3)){
         if(!caida){
             caida = true;
             checkCaida(datos[160]); //Check pantalla del underworld en 0xA0

@@ -13,7 +13,9 @@ var Hammerjump = [
     "Habría sido mejor dar la vuelta"
 ]
 
-
+var SWBK = [
+    "a"
+]
 
 
 /**
