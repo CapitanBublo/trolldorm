@@ -83,6 +83,7 @@ function closeConection(){
         socket = null;
         setConectionText("Desconectado");
     }
+    clearInterval(intervaloLectura);
 }
 
 /**
@@ -95,6 +96,26 @@ var INICIO_MEMORIAS = 0xF50000
 
 function setOverOrUnderText(text){
     document.getElementById("overOrUnder").innerHTML = text;
+}
+
+
+var chestTurn = 0;
+function setChestTurn(){ 
+    chestTurn++;
+    document.getElementById("chestTurn").innerHTML = (chestTurn + " chest turns PogChamp");
+}
+
+var sala, frase;
+var muerte = false;
+function checkMuerte(salaID, uw){
+    if(!uw){
+        sala = getSalaOW(salaID);
+    }
+    else{
+        sala = getSalaUW(salaID);
+    }
+    frase = getFraseMuerte(sala);
+    document.getElementById("deathCheck").innerHTML = frase;
 }
 
 var nBonks = 0;
@@ -116,32 +137,47 @@ function leerMemoria(dir, tam, fun){ //Por algún motivo, si llamo directamente 
     socket.onmessage = fun;
 }
 
+var datos = new Uint8Array();
+
 function leer(){  //Así que encapsulo socket.send en otra función, y con esto si que puedo leer la respuesta??? No entiendo JS
     leerMemoria(INICIO_MEMORIAS, 0xFF, function(event){ //Shoutouts a Stack Overflow
-        var datos = new Uint8Array(event.data); //Array de casi todos los valores de memoria
-        actualizaDatos(datos);
+        leerMemoria(INICIO_MEMORIAS + 0x36B, 0x2, function(event2){
+            var datos = new Uint8Array([...new Uint8Array(event.data), ...new Uint8Array(event2.data)]);
+            actualizaDatos(datos);
+        });
     });
 }
 
 function actualizaDatos(datos){
-
+    //document.getElementById("debug").innerHTML = datos[255];
     if(datos[27] == 0){ //Indica en que seccion del mundo estas
         setOverOrUnderText("¡Estas en el Overworld!");
     }
     else{
         setOverOrUnderText("¡Estas en el Underworld!");
     }
-    if(datos[39] == 24 || datos[40] == 24){  //!ESTO NO FUNCIONA Indica si has bonkeado  
-        setBonkCount();
-        bonked = true;
+    if(datos[256] == 5 && datos[47] !== 0 && datos[242] == 128){
+        //TODO: Se puede arreglar? setChestTurn(); 
+    }
+    if(datos[255] == 1){
+        if(!muerte){
+            muerte = true;
+            if(datos[27] == 0){ //Overworld
+                checkMuerte(datos[138], false);
+            }
+            else{ //Underworld
+                checkMuerte(datos[160], true)
+            }
+        }
     }
     else{
-        bonked = false;
+        muerte = false;
     }
+    
 }
 
 function empezarALeer(){
-    setInterval(leer, 200);
+    intervaloLectura = setInterval(leer, 200);
 }
 
 /** 
