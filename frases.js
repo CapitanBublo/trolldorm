@@ -9,7 +9,9 @@ var Moldorm = [
     "Buen fail"
 ]
 
-
+var Hammerjump = [
+    "Habría sido mejor dar la vuelta"
+]
 
 
 
@@ -25,7 +27,21 @@ function getRandomInt(max){
 }
 
 function getFraseMuerte(sala){
-    if(sala == "Moldorm"){
-        return Moldorm[getRandomInt(Moldorm.length)];
+    switch(sala){
+        case "Moldorm":
+            return Moldorm[getRandomInt(Moldorm.length)];
+            break;
     }
+}
+
+function getFraseCaida(sala){
+    switch(sala){
+        case "Moldorm":
+            return Moldorm[getRandomInt(Moldorm.length)];
+            break;
+        case "Hammerjump":
+            return Hammerjump[getRandomInt(Hammerjump.length)];
+            break;
+    }
+
 }

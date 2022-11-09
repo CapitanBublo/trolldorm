@@ -94,8 +94,8 @@ function closeConection(){
 
 var INICIO_MEMORIAS = 0xF50000
 
-function setOverOrUnderText(text){
-    document.getElementById("overOrUnder").innerHTML = text;
+function setSpinSpeed(text){
+    document.getElementById("spinSpeed").innerHTML = text;
 }
 
 
@@ -107,6 +107,7 @@ function setChestTurn(){
 
 var sala, frase;
 var muerte = false;
+var caida = false;
 function checkMuerte(salaID, uw){
     if(!uw){
         sala = getSalaOW(salaID);
@@ -115,7 +116,17 @@ function checkMuerte(salaID, uw){
         sala = getSalaUW(salaID);
     }
     frase = getFraseMuerte(sala);
-    document.getElementById("deathCheck").innerHTML = frase;
+    if(frase !== undefined){
+        document.getElementById("deathCheck").innerHTML = frase;
+    }
+}
+
+function checkCaida(salaID){
+    sala = getSalaUW(salaID);
+    frase = getFraseCaida(sala);
+    if(frase !== undefined){
+        document.getElementById("caidaCheck").innerHTML = frase;
+    }
 }
 
 var nBonks = 0;
@@ -141,39 +152,52 @@ var datos = new Uint8Array();
 
 function leer(){  //Así que encapsulo socket.send en otra función, y con esto si que puedo leer la respuesta??? No entiendo JS
     leerMemoria(INICIO_MEMORIAS, 0xFF, function(event){ //Shoutouts a Stack Overflow
-        leerMemoria(INICIO_MEMORIAS + 0x36B, 0x2, function(event2){
+        leerMemoria(INICIO_MEMORIAS + 0x354, 0xFF, function(event2){
             var datos = new Uint8Array([...new Uint8Array(event.data), ...new Uint8Array(event2.data)]);
             actualizaDatos(datos);
         });
     });
 }
+// DATOS: [0...254] = [0x00...0xFF] ; [255...509] = [0x354...0x453]
+
 
 function actualizaDatos(datos){
-    //document.getElementById("debug").innerHTML = datos[255];
-    if(datos[27] == 0){ //Indica en que seccion del mundo estas
-        setOverOrUnderText("¡Estas en el Overworld!");
-    }
-    else{
-        setOverOrUnderText("¡Estas en el Underworld!");
-    }
-    if(datos[256] == 5 && datos[47] !== 0 && datos[242] == 128){
-        //TODO: Se puede arreglar? setChestTurn(); 
-    }
-    if(datos[255] == 1){
+    document.getElementById("debug").innerHTML = datos[278];
+
+    //Check muerte en 0x36B, escribir una frase
+    if(datos[278] == 1){
         if(!muerte){
             muerte = true;
-            if(datos[27] == 0){ //Overworld
-                checkMuerte(datos[138], false);
+            if(datos[27] == 0){ //Check over o under world en 0x1B
+                checkMuerte(datos[138], false); //Check pantalla del overworld en 0x8A
             }
-            else{ //Underworld
-                checkMuerte(datos[160], true)
+            else{
+                checkMuerte(datos[160], true) //Check pantalla del underworld en 0xA0
             }
         }
     }
     else{
         muerte = false;
     }
-    
+
+    //Check for spin speed: spin animation on 0x354 and dashing flag on 0x372
+    if((datos[255] == 15||datos[255] == 32) && datos[285] == 1){
+        setSpinSpeed("¡Spinspeed!");
+    }
+    else if(datos[285] == 0){
+        setSpinSpeed("No spinspeed");
+    }
+
+    //Check caida en 0x5B. Todas las caidas son en underworld así que no hace falta checkear eso.
+    if(datos[91] == 2){
+        if(!caida){
+            caida = true;
+            checkCaida(datos[160]); //Check pantalla del underworld en 0xA0
+        }
+    }
+    else{
+        caida = false;
+    }
 }
 
 function empezarALeer(){

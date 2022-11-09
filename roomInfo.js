@@ -10,7 +10,8 @@ const salasOverworld = new Map([
 ]);
 
 const salasUnderworld = new Map([
-    [0x07, "Moldorm"]
+    [0x07, "Moldorm"],
+    [0x1A, "Hammerjump"]
     //TODO: Todos los jefes
 ]);
 
