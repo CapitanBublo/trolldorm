@@ -129,6 +129,19 @@ function checkCaida(salaID){
     }
 }
 
+var nBolasAzules = 0;
+var bolaAzul = false;
+function setBolaAzul(){
+    nBolasAzules++;
+    document.getElementById("bolasAzules").innerHTML = ("Eso han sido " + nBolasAzules + " bolas azules");
+}
+
+function resetBolasAzules(){
+    nBolasAzules = 0;
+    bolaAzul = false;
+    document.getElementById("bolasAzules").innerHTML = ("Eso han sido " + nBolasAzules + " bolas azules");
+}
+
 var nBonks = 0;
 var bonked = false;
 function setBonkCount(){
@@ -153,16 +166,20 @@ var datos = new Uint8Array();
 function leer(){  //Así que encapsulo socket.send en otra función, y con esto si que puedo leer la respuesta??? No entiendo JS
     leerMemoria(INICIO_MEMORIAS, 0xFF, function(event){ //Shoutouts a Stack Overflow
         leerMemoria(INICIO_MEMORIAS + 0x354, 0xFF, function(event2){
-            var datos = new Uint8Array([...new Uint8Array(event.data), ...new Uint8Array(event2.data)]);
-            actualizaDatos(datos);
+            leerMemoria(INICIO_MEMORIAS + 0x830, 0xFF, function(event3){
+                var datos = new Uint8Array([...new Uint8Array(event.data), ...new Uint8Array(event2.data), ...new Uint8Array(event3.data)]);
+                actualizaDatos(datos);
+            })
         });
     });
 }
-// DATOS: [0...254] = [0x00...0xFF] ; [255...509] = [0x354...0x453]
+// DATOS: [0...254] = [0x00...0xFF] ; [255...509] = [0x354...0x453] ; [510...764] = [0x830...0x92F]
 
 
 function actualizaDatos(datos){
-    document.getElementById("debug").innerHTML = datos[278];
+    //document.getElementById("debug").innerHTML =
+    //(datos[513] + " " + datos[517] + " " + datos[521] + " " + datos[525] + " " +
+    //datos[529] + " " + datos[533] + " " + datos[537] + " " + datos[541]);
 
     //Check muerte en 0x36B, escribir una frase
     if(datos[278] == 1){
@@ -197,6 +214,25 @@ function actualizaDatos(datos){
     }
     else{
         caida = false;
+    }
+
+    //Check de los gráficos de las bolas azules (ni idea de si es consistente):
+    //Si estas en la sala de Aga1, y (datos de gráficos que no entiendo pero que dan lugar a bolas azules)
+    //TODO: Detecta las bolas normales en la parte de arriba del todo como bolas azules. Revisar gráficos.
+    if((datos[160] == 32) &&
+       (datos[513] == 36) && (datos[517] == 36) && (datos[521] == 36) && (datos[525] == 36) &&
+       (datos[529] == 36) && (datos[533] == 36) && (datos[537] == 36) && (datos[541] == 36)){
+        if(!bolaAzul){
+            bolaAzul = true;
+            setBolaAzul();
+        }
+    }
+    else{
+        bolaAzul = false;
+    }
+    //Resetear bolas azules
+    if(datos[160] == 48){
+        resetBolasAzules();
     }
 }
 
