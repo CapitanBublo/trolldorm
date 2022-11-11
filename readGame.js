@@ -167,13 +167,15 @@ function leer(){  //Así que encapsulo socket.send en otra función, y con esto 
     leerMemoria(INICIO_MEMORIAS, 0xFF, function(event){ //Shoutouts a Stack Overflow
         leerMemoria(INICIO_MEMORIAS + 0x354, 0xFF, function(event2){
             leerMemoria(INICIO_MEMORIAS + 0x830, 0xFF, function(event3){
-                var datos = new Uint8Array([...new Uint8Array(event.data), ...new Uint8Array(event2.data), ...new Uint8Array(event3.data)]);
-                actualizaDatos(datos);
+                leerMemoria(INICIO_MEMORIAS + 0x11A, 0x4, function(event4){
+                    var datos = new Uint8Array([...new Uint8Array(event.data), ...new Uint8Array(event2.data), ...new Uint8Array(event3.data), ...new Uint8Array(event4.data)]);
+                    actualizaDatos(datos);
+                })
             })
         });
     });
 }
-// DATOS: [0...254] = [0x00...0xFF] ; [255...509] = [0x354...0x453] ; [510...764] = [0x830...0x92F]
+// DATOS: [0...254] = [0x00...0xFF] ; [255...509] = [0x354...0x453] ; [510...764] = [0x830...0x92F] ; [765...768] = [0x11A...0x11D]
 
 
 function actualizaDatos(datos){
@@ -205,6 +207,11 @@ function actualizaDatos(datos){
         setSpinSpeed("No spinspeed");
     }
 
+    //Chech for bonks: recoil state on 0x4D and screen shake on 0x11A to 0x11D
+    if((datos[77] == 1) && (((datos[765] !== 0) && (datos[766] !== 0)) || ((datos[767] !== 0) && (datos[768] !== 0)))){
+        setBonkCount();
+    }
+
     //Check caida en 0x5B. Todas las caidas son en underworld así que no hace falta checkear eso.
     if((datos[91] == 2) || (datos[91] == 3)){
         if(!caida){
@@ -218,7 +225,7 @@ function actualizaDatos(datos){
 
     //Check de los gráficos de las bolas azules (ni idea de si es consistente):
     //Si estas en la sala de Aga1, y (datos de gráficos que no entiendo pero que dan lugar a bolas azules)
-    //TODO: Detecta las bolas normales en la parte de arriba del todo como bolas azules. Revisar gráficos.
+    //TODO: Parece que funciona, testear más
     if((datos[160] == 32) &&
        (datos[513] == 36) && (datos[517] == 36) && (datos[521] == 36) && (datos[525] == 36) &&
        (datos[529] == 36) && (datos[533] == 36) && (datos[537] == 36) && (datos[541] == 36) &&
