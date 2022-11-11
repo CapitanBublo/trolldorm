@@ -221,7 +221,8 @@ function actualizaDatos(datos){
     //TODO: Detecta las bolas normales en la parte de arriba del todo como bolas azules. Revisar gráficos.
     if((datos[160] == 32) &&
        (datos[513] == 36) && (datos[517] == 36) && (datos[521] == 36) && (datos[525] == 36) &&
-       (datos[529] == 36) && (datos[533] == 36) && (datos[537] == 36) && (datos[541] == 36)){
+       (datos[529] == 36) && (datos[533] == 36) && (datos[537] == 36) && (datos[541] == 36) &&
+       (datos[545] == 36) && (datos[549] == 36) && (datos[553] == 36) && (datos[557] == 36)){
         if(!bolaAzul){
             bolaAzul = true;
             setBolaAzul();
