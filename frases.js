@@ -44,6 +44,8 @@ function getFraseCaida(sala){
         case "Hammerjump":
             return Hammerjump[getRandomInt(Hammerjump.length)];
             break;
+        case "SWBK":
+            return SWBK[getRandomInt(SWBK.length)];
     }
 
 }

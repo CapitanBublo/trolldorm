@@ -129,9 +129,10 @@ function checkCaida(salaID){
     }
 }
 
+var D0A, D0B, D0C, D0D, D0E, D0F;
 var nBolasAzules = 0;
 var bolaAzul = false;
-function setBolaAzul(){
+function setBolaAzul(a, b, c, d, e, f){
     nBolasAzules++;
     document.getElementById("bolasAzules").innerHTML = ("Eso han sido " + nBolasAzules + " bolas azules");
 }
@@ -146,6 +147,7 @@ var nBonks = 0;
 var bonked = false;
 function setBonkCount(){
     if(!bonked){
+        bonked = true;
         nBonks++;
         document.getElementById("bonkCount").innerHTML = ("Y con ese bonk, ya van " + nBonks);
     }
@@ -166,16 +168,18 @@ var datos = new Uint8Array();
 function leer(){  //Así que encapsulo socket.send en otra función, y con esto si que puedo leer la respuesta??? No entiendo JS
     leerMemoria(INICIO_MEMORIAS, 0xFF, function(event){ //Shoutouts a Stack Overflow
         leerMemoria(INICIO_MEMORIAS + 0x354, 0xFF, function(event2){
-            leerMemoria(INICIO_MEMORIAS + 0x830, 0xFF, function(event3){
+            leerMemoria(INICIO_MEMORIAS + 0xD4D, 0xFF, function(event3){
                 leerMemoria(INICIO_MEMORIAS + 0x11A, 0x4, function(event4){
-                    var datos = new Uint8Array([...new Uint8Array(event.data), ...new Uint8Array(event2.data), ...new Uint8Array(event3.data), ...new Uint8Array(event4.data)]);
-                    actualizaDatos(datos);
+                    leerMemoria(INICIO_MEMORIAS + 0xD0A, 0x6, function(event5){
+                        var datos = new Uint8Array([...new Uint8Array(event.data), ...new Uint8Array(event2.data), ...new Uint8Array(event3.data), ...new Uint8Array(event4.data), ...new Uint8Array(event5.data)]);
+                        actualizaDatos(datos);
+                    })
                 })
             })
         });
     });
 }
-// DATOS: [0...254] = [0x00...0xFF] ; [255...509] = [0x354...0x453] ; [510...764] = [0x830...0x92F] ; [765...768] = [0x11A...0x11D]
+// DATOS: [0...254] = [0x00...0xFF] ; [255...509] = [0x354...0x453] ; [510...764] = [0xD4D...0xE4C] ; [765...768] = [0x11A...0x11D] ; [769...774] = [0xD0A...0xD0F]
 
 
 function actualizaDatos(datos){
@@ -208,8 +212,11 @@ function actualizaDatos(datos){
     }
 
     //Chech for bonks: recoil state on 0x4D and screen shake on 0x11A to 0x11D
-    if((datos[77] == 1) && (((datos[765] !== 0) && (datos[766] !== 0)) || ((datos[767] !== 0) && (datos[768] !== 0)))){
+    if((datos[77] == 1) && ((datos[765] !== 0) || (datos[766] !== 0) || (datos[767] !== 0) || (datos[768] !== 0))){
         setBonkCount();
+    }
+    else if((datos[77] !== 1)){
+        bonked = false;
     }
 
     //Check caida en 0x5B. Todas las caidas son en underworld así que no hace falta checkear eso.
@@ -224,23 +231,43 @@ function actualizaDatos(datos){
     }
 
     //Check de los gráficos de las bolas azules (ni idea de si es consistente):
-    //Si estas en la sala de Aga1, y (datos de gráficos que no entiendo pero que dan lugar a bolas azules)
-    //TODO: Parece que funciona, testear más
-    if((datos[160] == 32) &&
-       (datos[513] == 36) && (datos[517] == 36) && (datos[521] == 36) && (datos[525] == 36) &&
-       (datos[529] == 36) && (datos[533] == 36) && (datos[537] == 36) && (datos[541] == 36) &&
-       (datos[545] == 36) && (datos[549] == 36) && (datos[553] == 36) && (datos[557] == 36)){
-        if(!bolaAzul){
+    //Si estas en la sala de Aga1 AND 
+    //(datos de sprites que son aparentemente consistentes con bolas azules) AND 
+    //(cosas de graficos que no entiendo pero son consistentes con bolas azules)
+
+    //D0A - D0F
+
+    if(datos[160] == 32){
+        if(bolaAzul){
+            if((datos[769] === a) &&
+            (datos[770] === b) &&
+            (datos[771] === c) &&
+            (datos[772] === d) &&
+            (datos[773] === e) &&
+            (datos[774] === f)){
+                bolaAzul = false;
+            }
+        }
+        else{
             bolaAzul = true;
             setBolaAzul();
+            a = datos[769];
+            b = datos[770];
+            c = datos[771];
+            d = datos[772];
+            e = datos[773];
+            f = datos[774];
         }
-    }
-    else{
-        bolaAzul = false;
     }
     //Resetear bolas azules
     if(datos[160] == 48){
         resetBolasAzules();
+        a = datos[769];
+        b = datos[770];
+        c = datos[771];
+        d = datos[772];
+        e = datos[773];
+        f = datos[774];
     }
 }
 
